@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+server/node_modules/
+
+# Variables d'environnement (secrets)
+.env
+server/.env
+
+# Firebase config (contient les clés)
+firebase.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+build/
