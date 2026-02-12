@@ -16,11 +16,7 @@ let accessToken = null;
 let tokenExpiry = 0;
 
 // Obtenir un token 42
-async function getToken() {
-    if (accessToken && Date.now() < tokenExpiry) {
-        return accessToken;
-    }
-
+async function fetchNewToken() {
     console.log('🔑 Obtention d\'un nouveau token 42...');
     
     const response = await fetch('https://api.intra.42.fr/oauth/token', {
@@ -43,6 +39,32 @@ async function getToken() {
     }
     
     throw new Error('Impossible d\'obtenir le token');
+}
+
+async function getToken()
+{
+    if (!accessToken || Date.now() >= tokenExpiry)
+    {
+        return await fetchNewToken();
+    }
+    return accessToken;
+}
+
+async function callApi42(url)
+{
+    let token = await getToken();
+
+    let response = await fetch(url, {headers: {'Autorization': `Baerer ${token}`}});
+
+    if (response.status === 401)
+    {
+        console.log(`⚠️ Token invalide, renouvellement...`);
+        accessToken = null;
+        token = await fetchNewToken();
+
+        response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` }});
+    }
+    return response;
 }
 
 app.get('/api/logtime/:login', async (req, res) => {
