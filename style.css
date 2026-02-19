@@ -603,3 +603,42 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.add-today-btn {
+      padding: 6px 12px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 6px;
+      color: #3b82f6;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+  }
+
+  .add-today-btn:hover {
+      background: rgba(59, 130, 246, 0.35);
+  }
+
+  .today-target {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      align-self: center;
+      white-space: nowrap;
+  }
+
+  .today-target.goal-pending {
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+  }
+
+  .today-target.goal-reached {
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+  }
+
+    .today-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }

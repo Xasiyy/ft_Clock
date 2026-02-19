@@ -73,10 +73,10 @@ app.get('/api/logtime/:login', async (req, res) => {
     try {
         const token = await getToken();
         
-        const response = await fetch(
+        const response = await callApi42(
             `https://api.intra.42.fr/v2/users/${login}/locations_stats`,
             {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Baerer ${token}` }
             }
         );
 

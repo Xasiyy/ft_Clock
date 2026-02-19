@@ -39,6 +39,7 @@ const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const userEmail = document.getElementById('userEmail');
+const addTodayBtn = document.getElementById('addTodayBtn');
 
 // App
 const prevMonthBtn = document.getElementById('prevMonth');
@@ -697,16 +698,50 @@ function updateStats() {
         }
     }
 
+    const now = new Date();
     const monthlyMinutes = parseHours(data.monthlyHours);
+    const todayKey = formatDate(year, month, now.getDate());
     const remainingMinutes = Math.max(0, monthlyMinutes - totalMinutes);
+    const todayMinutes = parseHours(data.hours[todayKey] || 0);
+    const totalMionutesWithoutToday = totalMinutes - todayMinutes;
     const remainingDays = getRemainingWorkingDays();
-
-    const average = remainingDays > 0 ? Math.floor(remainingMinutes / remainingDays) : 0;
+    const remainingForAverage = Math.max(0, monthlyMinutes - totalMionutesWithoutToday);
+    const baseAverage = remainingDays > 0 ? Math.floor(remainingForAverage / remainingDays) : 0;
+    const todayOverage = Math.max(0, todayMinutes - baseAverage);
+    const adjustRemaining = Math.max(0, remainingForAverage - todayOverage);
+    const average = remainingDays > 0 ? Math.floor(adjustRemaining / remainingDays) : 0;
+    
 
     document.getElementById('hoursDone').textContent = formatHours(totalMinutes);
     document.getElementById('hoursRemaining').textContent = formatHours(remainingMinutes);
     document.getElementById('hoursRequired').textContent = formatHours(monthlyMinutes);
     document.getElementById('dailyAverage').textContent = formatHours(average);
+
+    const todayEl = document.getElementById('todayTarget');
+    const isCurrentMonth = (year === now.getFullYear() && month === now.getMonth());
+
+    if (isCurrentMonth)
+    {
+        const todayReamainingMinutes = average - todayMinutes;
+
+        if (todayReamainingMinutes <= 0)
+        {
+            todayEl.textContent = '✓ Objectif atteint';
+            todayEl.classList.add('goal-reached');
+            todayEl.classList.remove('goal-pending');
+        }
+        else
+        {
+            todayEl.textContent = `Il reste ${formatHours(todayReamainingMinutes)} aujourd\'hui`;
+            todayEl.classList.add('goal-pending');
+            todayEl.classList.remove('goal-reached');
+        }
+        todayEl.style.display = '';
+    }
+    else
+    {
+        todayEl.style.display = 'none';
+    }
 }
 
 // ==================== MODAL ====================
@@ -779,6 +814,12 @@ monthlyHoursInput.addEventListener('change', saveSettings);
 cancelBtn.addEventListener('click', closeModal);
 saveBtn.addEventListener('click', saveHours);
 deleteBtn.addEventListener('click', deleteHours);
+
+addTodayBtn.addEventListener('click', () =>
+{
+    const now = new Date();
+    openModal(now.getFullYear(), now.getMonth(), now.getDate());
+});
 
 // Touche Entrée dans le modal
 document.getElementById('hoursInput').addEventListener('keypress', (e) => {
