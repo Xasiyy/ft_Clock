@@ -25,7 +25,8 @@ let unsubscribeSnapshot = null;
 let data = {
     monthlyHours: 160,
     includeSaturday: false,
-    hours: {} // "YYYY-MM-DD": number
+    hours: {}, // "YYYY-MM-DD": number
+    daysOff: {}
 };
 // ==================== ÉLÉMENTS DOM ====================
 // Auth
@@ -39,6 +40,7 @@ const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const userEmail = document.getElementById('userEmail');
+const addTodayBtn = document.getElementById('addTodayBtn');
 
 // App
 const prevMonthBtn = document.getElementById('prevMonth');
@@ -192,7 +194,8 @@ onAuthStateChanged(auth, (user) => {
         data = {
             monthlyHours: 160,
             includeSaturday: false,
-            hours: {}
+            hours: {},
+            daysOff: {}
         };
     }
 });
@@ -229,6 +232,7 @@ async function loadDataFromFirebase() {
                 data.monthlyHours = cloudData.monthlyHours || 160;
                 data.includeSaturday = cloudData.includeSaturday || false;
                 data.hours = cloudData.hours || {};
+                data.daysOff = cloudData.daysOff || {};
                 
                 // Mettre à jour l'interface
                 updateUIWithData();
@@ -258,6 +262,7 @@ async function saveDataToFirebase() {
             monthlyHours: data.monthlyHours,
             includeSaturday: data.includeSaturday,
             hours: data.hours,
+            daysOff: data.daysOff,
             lastUpdated: new Date()
         });
         
@@ -388,7 +393,7 @@ async function syncWith42() {
     syncBtn.textContent = '⏳ Sync...';
 
     try {
-        const response = await fetch(`http://localhost:3000/api/logtime/${userLogin42}`);
+        const response = await fetch(`https://ftclock.dev/api/logtime/${userLogin42}`);
         
         if (!response.ok) {
             throw new Error('Erreur lors de la récupération des données');
@@ -585,6 +590,14 @@ function renderCalendar() {
         dayNumber.textContent = day;
         cell.appendChild(dayNumber);
 
+        if (data.daysOff && data.daysOff[dateKey]) {
+            cell.classList.add('day-off');
+            const offLabel = document.createElement('div');
+            offLabel.className = 'day-off-indicator';
+            offLabel.textContent = 'off';
+            cell.appendChild(offLabel);
+        }
+
         if (data.hours[dateKey]) {
             cell.classList.add('has-hours');
             const hours = document.createElement('div');
@@ -609,8 +622,8 @@ function getWorkingDays() {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay();
         
-        if (dayOfWeek === 0) continue;
-        if (dayOfWeek === 6 && !data.includeSaturday) continue;
+        if ((dayOfWeek === 0 || dayOfWeek === 6) && !data.includeSaturday ) continue;
+        if (data.daysOff && data.daysOff[formatDate(year, month, day)]) continue;
         
         workingDays++;
     }
@@ -640,8 +653,8 @@ function getRemainingWorkingDays() {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay();
         
-        if (dayOfWeek === 0) continue;
-        if (dayOfWeek === 6 && !data.includeSaturday) continue;
+        if ((dayOfWeek === 0 || dayOfWeek === 6) && !data.includeSaturday) continue;
+        if (data.daysOff && data.daysOff[formatDate(year, month, day)]) continue;
         
         remainingDays++;
     }
@@ -697,16 +710,50 @@ function updateStats() {
         }
     }
 
+    const now = new Date();
     const monthlyMinutes = parseHours(data.monthlyHours);
+    const todayKey = formatDate(year, month, now.getDate());
     const remainingMinutes = Math.max(0, monthlyMinutes - totalMinutes);
+    const todayMinutes = parseHours(data.hours[todayKey] || 0);
+    const totalMionutesWithoutToday = totalMinutes - todayMinutes;
     const remainingDays = getRemainingWorkingDays();
-
-    const average = remainingDays > 0 ? Math.floor(remainingMinutes / remainingDays) : 0;
+    const remainingForAverage = Math.max(0, monthlyMinutes - totalMionutesWithoutToday);
+    const baseAverage = remainingDays > 0 ? Math.floor(remainingForAverage / remainingDays) : 0;
+    const todayOverage = Math.max(0, todayMinutes - baseAverage);
+    const adjustRemaining = Math.max(0, remainingForAverage - todayOverage);
+    const average = remainingDays > 0 ? Math.floor(adjustRemaining / remainingDays) : 0;
+    
 
     document.getElementById('hoursDone').textContent = formatHours(totalMinutes);
     document.getElementById('hoursRemaining').textContent = formatHours(remainingMinutes);
     document.getElementById('hoursRequired').textContent = formatHours(monthlyMinutes);
     document.getElementById('dailyAverage').textContent = formatHours(average);
+
+    const todayEl = document.getElementById('todayTarget');
+    const isCurrentMonth = (year === now.getFullYear() && month === now.getMonth());
+
+    if (isCurrentMonth)
+    {
+        const todayReamainingMinutes = average - todayMinutes;
+
+        if (todayReamainingMinutes <= 0)
+        {
+            todayEl.textContent = '✓ Objectif atteint';
+            todayEl.classList.add('goal-reached');
+            todayEl.classList.remove('goal-pending');
+        }
+        else
+        {
+            todayEl.textContent = `Il reste ${formatHours(todayReamainingMinutes)} aujourd\'hui`;
+            todayEl.classList.add('goal-pending');
+            todayEl.classList.remove('goal-reached');
+        }
+        todayEl.style.display = '';
+    }
+    else
+    {
+        todayEl.style.display = 'none';
+    }
 }
 
 // ==================== MODAL ====================
@@ -721,6 +768,12 @@ function openModal(year, month, day) {
         `${dayNames[date.getDay()]} ${day} ${getMonthName(currentDate).split(' ')[0]}`;
     document.getElementById('hoursInput').value = data.hours[dateKey] || '';
     
+    const dayOffToggle = document.getElementById('dayOffToggle');
+    if (data.daysOff && data.daysOff[dateKey])
+        dayOffToggle.classList.add('active');
+    else
+        dayOffToggle.classList.remove('active');
+
     if (data.hours[dateKey]) {
         deleteBtn.classList.remove('hidden');
     } else {
@@ -779,6 +832,33 @@ monthlyHoursInput.addEventListener('change', saveSettings);
 cancelBtn.addEventListener('click', closeModal);
 saveBtn.addEventListener('click', saveHours);
 deleteBtn.addEventListener('click', deleteHours);
+
+document.getElementById('dayOffToggle').addEventListener('click', () =>
+{
+    if (!selectedDay) return;
+    const dateKey = formatDate(selectedDay.year, selectedDay.month, selectedDay.day);
+    const toggle = document.getElementById('dayOffToggle');
+    if (data.daysOff[dateKey])
+    {
+        delete data.daysOff[dateKey];
+        toggle.classList.remove('active');
+    }
+    else
+    {
+        data.daysOff[dateKey] = true;
+        toggle.classList.add('active');
+    }
+    
+    saveDataToFirebase();
+    renderCalendar();
+    updateStats();
+});
+
+addTodayBtn.addEventListener('click', () =>
+{
+    const now = new Date();
+    openModal(now.getFullYear(), now.getMonth(), now.getDate());
+});
 
 // Touche Entrée dans le modal
 document.getElementById('hoursInput').addEventListener('keypress', (e) => {

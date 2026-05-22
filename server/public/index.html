@@ -19,7 +19,7 @@
             
            <!-- Formulaire de connexion -->
             <div class="auth-form" id="loginForm">
-                <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                <input type="email" id="loginEmail" placeholder="Student Email" class="auth-input">
                 <input type="password" id="loginPassword" placeholder="Mot de passe" class="auth-input">
                 <button class="auth-btn" id="loginBtn">Se connecter</button>
                 <p class="auth-error" id="loginError"></p>
@@ -27,7 +27,7 @@
 
             <!-- Formulaire d'inscription -->
             <div class="auth-form hidden" id="registerForm">
-                <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
+                <input type="email" id="registerEmail" placeholder="Student Email" class="auth-input">
                 <input type="password" id="registerPassword" placeholder="Mot de passe (min 6 caractères)" class="auth-input">
                 
                 <!-- Champ login 42 -->
@@ -53,6 +53,10 @@
         <div class="user-info">
             <div class="user-meta">
                 <span id="userEmail"></span>
+                <div class="today-row">
+                    <span class="today-target" id="todayTarget" title="Heures restantes pour atteindre l'objectif du jour"></span>
+                    <button class="plus-btn" id="addTodayBtn" title="Entrer les heures du jour">+</button>
+                </div>
             </div>
             <div class="user-actions">
                 <button class="sync-btn" id="syncBtn" title="Synchroniser avec 42">🔄 Sync 42</button>
@@ -92,7 +96,7 @@
                     <button class="plus-btn" id="plusHours">+</button>
                 </div>
                 <div class="setting-row">
-                    <span class="setting-label">Inclure les samedis</span>
+                    <span class="setting-label">Inclure le weekend</span>
                     <div class="toggle" id="saturdayToggle"></div>
                 </div>
             </div>
@@ -102,11 +106,17 @@
             <div class="calendar-grid" id="calendar"></div>
         </div>
     </div>
-
+    
     <!-- Modal pour ajouter des heures -->
     <div class="modal" id="modal">
         <div class="modal-content">
-            <div class="modal-header" id="modalDate"></div>
+            <div class="modal-header">
+                <span id="modalDate"></span>
+                <div class="day-off-row">
+                    <span class="day-off-label">Jour off</span>
+                    <div class="toggle" id="dayOffToggle"></div>
+                </div>
+            </div>
             <div class="modal-input-group">
                 <label class="modal-label">Heures travaillées</label>
                 <input type="number" class="modal-input" id="hoursInput" step="0.5" min="0" placeholder="0">
@@ -124,7 +134,7 @@
             <div class="modal-header">Modifier le login 42</div>
             <div class="modal-input-group">
                 <label class="modal-label">Votre login 42</label>
-                <input type="text" class="modal-input" id="login42Input" placeholder="ex: darthcae">
+                <input type="text" class="modal-input" id="login42Input">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="cancelLoginBtn">Annuler</button>
