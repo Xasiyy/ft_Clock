@@ -1,2 +1,5 @@
+[build]
+buildCommand = "cd server && npm install"
+
 [deploy]
-startCommand = "node index.js"
+startCommand = "node server/index.js"
