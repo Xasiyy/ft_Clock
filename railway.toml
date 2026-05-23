@@ -1,5 +1,5 @@
 [build]
-buildCommand = "cd server && npm install"
+buildCommand = "npm install --prefix server"
 
 [deploy]
 startCommand = "node server/index.js"
