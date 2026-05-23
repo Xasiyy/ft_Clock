@@ -93,7 +93,7 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'ft_Clock API is running!' });
 });
 
-const PORT = 2441;
+const PORT = process.env.PORT || 2441;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveur ft_Clock lancé sur http://0.0.0.0:${PORT}`);
 });
