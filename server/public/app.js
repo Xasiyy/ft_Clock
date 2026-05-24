@@ -393,7 +393,8 @@ async function syncWith42() {
     syncBtn.textContent = '⏳ Sync...';
 
     try {
-        const response = await fetch(`https://ftclock.dev/api/logtime/${userLogin42}`);
+        //const response = await fetch(`https://ftclock.dev/api/logtime/${userLogin42}`);
+        const response = await fetch(`https://ftclock-production.up.railway.app/api/logtime/${userLogin42}`);
         
         if (!response.ok) {
             throw new Error('Erreur lors de la récupération des données');
