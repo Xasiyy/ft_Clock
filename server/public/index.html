@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Écran de connexion (masqué par défaut) -->
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <h1>ft_Clock</h1>
@@ -17,7 +16,6 @@
                 <button class="auth-tab" id="registerTab">Inscription</button>
             </div>
             
-           <!-- Formulaire de connexion -->
             <div class="auth-form" id="loginForm">
                 <input type="email" id="loginEmail" placeholder="Student Email" class="auth-input">
                 <input type="password" id="loginPassword" placeholder="Mot de passe" class="auth-input">
@@ -25,12 +23,10 @@
                 <p class="auth-error" id="loginError"></p>
             </div>
 
-            <!-- Formulaire d'inscription -->
             <div class="auth-form hidden" id="registerForm">
                 <input type="email" id="registerEmail" placeholder="Student Email" class="auth-input">
                 <input type="password" id="registerPassword" placeholder="Mot de passe (min 6 caractères)" class="auth-input">
                 
-                <!-- Champ login 42 -->
                 <input type="text" id="registerLogin42" placeholder="Login 42" class="auth-input login42-input">
                 
                 <button class="auth-btn" id="registerBtn">S'inscrire</button>
@@ -39,7 +35,6 @@
         </div>
     </div>
 
-    <!-- Application principale (masquée par défaut) -->
     <div class="container hidden" id="appContainer">
         <div class="user-info">
             <div class="user-meta">
@@ -107,7 +102,6 @@
         </div>
     </div>
     
-    <!-- Modal pour ajouter des heures -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -128,7 +122,6 @@
             </div>
         </div>
     </div>
-    <!-- Modal pour modifier le login 42 -->
     <div class="modal" id="loginModal">
         <div class="modal-content">
             <div class="modal-header">Modifier le login 42</div>
@@ -142,7 +135,6 @@
             </div>
         </div>
     </div>
-    <!-- Firebase SDK (version 9 - modulaire) -->
     <script type="module" src="app.js"></script>
 </body>
 </html>

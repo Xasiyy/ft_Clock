@@ -1,5 +1,4 @@
 console.log('auth ===', auth);
-// Import Firebase auth et firestore DEPUIS firebase-config.js
 import { auth, db } from './firebase.js';
 
 import { 
@@ -16,7 +15,6 @@ import {
     onSnapshot 
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-// ==================== VARIABLES GLOBALES ====================
 let currentUser = null;
 let currentDate = new Date();
 let selectedDay = null;
@@ -25,11 +23,9 @@ let unsubscribeSnapshot = null;
 let data = {
     monthlyHours: 160,
     includeSaturday: false,
-    hours: {}, // "YYYY-MM-DD": number
+    hours: {},
     daysOff: {}
 };
-// ==================== ÉLÉMENTS DOM ====================
-// Auth
 const authContainer = document.getElementById('authContainer');
 const appContainer = document.getElementById('appContainer');
 const loginTab = document.getElementById('loginTab');
@@ -42,7 +38,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 const userEmail = document.getElementById('userEmail');
 const addTodayBtn = document.getElementById('addTodayBtn');
 
-// App
 const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 const saturdayToggle = document.getElementById('saturdayToggle');
@@ -52,7 +47,6 @@ const cancelBtn = document.getElementById('cancelBtn');
 const saveBtn = document.getElementById('saveBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 
-// Login 42 Modal
 const editLoginBtn = document.getElementById('editLoginBtn');
 const loginModal = document.getElementById('loginModal');
 const login42Input = document.getElementById('login42Input');
@@ -60,12 +54,8 @@ const cancelLoginBtn = document.getElementById('cancelLoginBtn');
 const saveLoginBtn = document.getElementById('saveLoginBtn');
 const displayLogin42 = document.getElementById('displayLogin42');
 
-// Variable pour stocker le login
 let userLogin42 = '';
 
-// ==================== AUTHENTIFICATION ====================
-
-// Basculer entre login et register
 loginTab.addEventListener('click', () => {
     loginTab.classList.add('active');
     registerTab.classList.remove('active');
@@ -80,7 +70,6 @@ registerTab.addEventListener('click', () => {
     loginForm.classList.add('hidden');
 });
 
-// Inscription
 registerBtn.addEventListener('click', async () => {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
@@ -100,7 +89,6 @@ registerBtn.addEventListener('click', async () => {
     
     try {
         await createUserWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged va gérer la suite automatiquement
     } catch (error) {
         console.error('Erreur inscription:', error);
         if (error.code === 'auth/email-already-in-use') {
@@ -121,7 +109,6 @@ registerBtn.addEventListener('click', async () => {
     }
 });
 
-// Connexion
 loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
@@ -136,7 +123,6 @@ loginBtn.addEventListener('click', async () => {
     
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged va gérer la suite automatiquement
     } catch (error) {
         console.error('Erreur connexion:', error);
         if (error.code === 'auth/invalid-credential') {
@@ -149,48 +135,38 @@ loginBtn.addEventListener('click', async () => {
     }
 });
 
-// Déconnexion
 logoutBtn.addEventListener('click', async () => {
     try {
-        // Arrêter l'écoute en temps réel
         if (unsubscribeSnapshot) {
             unsubscribeSnapshot();
             unsubscribeSnapshot = null;
         }
         
         await signOut(auth);
-        // onAuthStateChanged va gérer la suite automatiquement
     } catch (error) {
         console.error('Erreur déconnexion:', error);
     }
 });
 
-// Écouter les changements d'état d'authentification
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Utilisateur connecté
         currentUser = user;
         console.log('Utilisateur connecté:', user.email);
         
-        // Afficher l'app, masquer l'auth
         authContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
         userEmail.textContent = user.email;
         
-        // Charger les données depuis Firebase
         loadDataFromFirebase();
         loadLogin42FromFirebase();
         
     } else {
-        // Utilisateur déconnecté
         currentUser = null;
         console.log('Utilisateur déconnecté');
         
-        // Afficher l'auth, masquer l'app
         appContainer.classList.add('hidden');
         authContainer.classList.remove('hidden');
         
-        // Réinitialiser les données
         data = {
             monthlyHours: 160,
             includeSaturday: false,
@@ -200,16 +176,12 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// ==================== FIREBASE SYNC ====================
-
-// Obtenir l'ID du document actuel (année-mois)
 function getCurrentYearMonth() {
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`; // ex: "2024-02"
+    return `${year}-${month}`;
 }
 
-// Charger les données depuis Firebase
 async function loadDataFromFirebase() {
     if (!currentUser) return;
     
@@ -217,28 +189,23 @@ async function loadDataFromFirebase() {
     const docRef = doc(db, 'users', currentUser.uid, 'timeData', yearMonth);
     
     try {
-        // Arrêter l'ancienne écoute si elle existe
         if (unsubscribeSnapshot) {
             unsubscribeSnapshot();
         }
         
-        // Écouter les changements en temps réel
         unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const cloudData = docSnap.data();
                 console.log('Données reçues depuis Firebase:', cloudData);
                 
-                // Mettre à jour les données locales
                 data.monthlyHours = cloudData.monthlyHours || 160;
                 data.includeSaturday = cloudData.includeSaturday || false;
                 data.hours = cloudData.hours || {};
                 data.daysOff = cloudData.daysOff || {};
                 
-                // Mettre à jour l'interface
                 updateUIWithData();
             } else {
                 console.log('Pas de données pour ce mois, utilisation des valeurs par défaut');
-                // Créer le document avec les valeurs par défaut
                 saveDataToFirebase();
             }
         }, (error) => {
@@ -250,7 +217,6 @@ async function loadDataFromFirebase() {
     }
 }
 
-// Sauvegarder les données dans Firebase
 async function saveDataToFirebase() {
     if (!currentUser) return;
     
@@ -272,9 +238,7 @@ async function saveDataToFirebase() {
     }
 }
 
-// Mettre à jour l'interface avec les données
 function updateUIWithData() {
-    // Paramètres
     monthlyHoursInput.value = data.monthlyHours;
     
     if (data.includeSaturday) {
@@ -283,32 +247,26 @@ function updateUIWithData() {
         saturdayToggle.classList.remove('active');
     }
     
-    // Calendrier et stats
     renderCalendar();
     updateStats();
 }
-// ==================== LOGIN 42 ====================
 
-// Ouvrir le modal de modification du login
 editLoginBtn.addEventListener('click', () => {
     login42Input.value = userLogin42 || '';
     loginModal.classList.add('active');
     login42Input.focus();
 });
 
-// Fermer le modal
 cancelLoginBtn.addEventListener('click', () => {
     loginModal.classList.remove('active');
 });
 
-// Fermer en cliquant à l'extérieur
 loginModal.addEventListener('click', (e) => {
     if (e.target === loginModal) {
         loginModal.classList.remove('active');
     }
 });
 
-// Sauvegarder le login
 saveLoginBtn.addEventListener('click', async () => {
     const newLogin = login42Input.value.trim();
     
@@ -321,7 +279,6 @@ saveLoginBtn.addEventListener('click', async () => {
     loginModal.classList.remove('active');
 });
 
-// Sauvegarder le login dans Firebase (dans le profil utilisateur)
 async function saveLogin42ToFirebase(login) {
     if (!currentUser) return;
     
@@ -332,7 +289,7 @@ async function saveLogin42ToFirebase(login) {
             login42: login,
             email: currentUser.email,
             lastUpdated: new Date()
-        }, { merge: true }); // merge: true pour ne pas écraser les autres données
+        }, { merge: true });
         
         console.log('Login 42 sauvegardé:', login);
     } catch (error) {
@@ -340,7 +297,6 @@ async function saveLogin42ToFirebase(login) {
     }
 }
 
-// Charger le login 42 depuis Firebase
 async function loadLogin42FromFirebase() {
     if (!currentUser) return;
     
@@ -359,30 +315,24 @@ async function loadLogin42FromFirebase() {
         console.error('Erreur chargement login:', error);
     }
 }
-// ==================== SYNC 42 API ====================
 
 const syncBtn = document.getElementById('syncBtn');
 
-// Convertir "HH:MM:SS.xxx" en format intra (H.MM)
     function parseLogtime(timeString) {
         const parts = timeString.split(':');
         let hours = parseInt(parts[0], 10);
         let minutes = parseInt(parts[1], 10);
         const seconds = parseFloat(parts[2]) || 0;
-        // Arrondir à la minute supérieure si >= 30 secondes
         if (seconds >= 30) {
             minutes++;
-            // Si on dépasse 59 minutes, ajouter une heure
             if (minutes >= 60) {
                 hours++;
                 minutes = 0;
             }
         }
-        // Format: heures.minutes
         return parseFloat(`${hours}.${String(minutes).padStart(2, '0')}`);
     }
 
-// Synchroniser les heures depuis l'API 42
 async function syncWith42() {
     if (!userLogin42 || userLogin42 === '---') {
         alert('Veuillez d\'abord configurer votre login 42 !');
@@ -393,8 +343,7 @@ async function syncWith42() {
     syncBtn.textContent = '⏳ Sync...';
 
     try {
-        //const response = await fetch(`https://ftclock.dev/api/logtime/${userLogin42}`);
-        const response = await fetch(`https://ftclock-production.up.railway.app/api/logtime/${userLogin42}`);
+        const response = await fetch(`/api/logtime/${encodeURIComponent(userLogin42)}`);
         
         if (!response.ok) {
             throw new Error('Erreur lors de la récupération des données');
@@ -402,9 +351,8 @@ async function syncWith42() {
 
         const logtimeData = await response.json();
         
-        console.log('📥 Données reçues de l\'API:', logtimeData);  // DEBUG
+        console.log('📥 Données reçues de l\'API:', logtimeData);
         
-        // Filtrer pour le mois actuel
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         let syncedCount = 0;
@@ -416,7 +364,7 @@ async function syncWith42() {
             }
         }
 
-        console.log(`📅 Mois actuel: ${year}-${month + 1}`);  // DEBUG
+        console.log(`📅 Mois actuel: ${year}-${month + 1}`);
 
         for (const [dateStr, timeStr] of Object.entries(logtimeData)) {
             const dateParts = dateStr.split('-');
@@ -432,23 +380,20 @@ async function syncWith42() {
                 console.log(`✅ Match! ${dateStr}: ${timeStr} → ${preciseHours}h`);
                 
                 if (preciseHours > 0) {
-                    data.hours[dateStr] = preciseHours;  // ← Utiliser preciseHours ici aussi
+                    data.hours[dateStr] = preciseHours;
                     syncedCount++;
                 }
             }
         }
          console.log('📊 data.hours après sync:', data.hours);
 
-        // Désactiver l'écoute pendant la sauvegarde pour éviter l'écrasement
         if (unsubscribeSnapshot) {
             unsubscribeSnapshot();
             unsubscribeSnapshot = null;
         }
 
-        // Sauvegarder dans Firebase
         await saveDataToFirebase();
         
-        // Mettre à jour l'affichage
         renderCalendar();
         updateStats();
 
@@ -456,7 +401,6 @@ async function syncWith42() {
             const yearMonth = getCurrentYearMonth();
             const docRef = doc(db, 'users', currentUser.uid, 'timeData', yearMonth);
             unsubscribeSnapshot = onSnapshot(docRef, () => {
-                // Ne rien faire au premier appel (évite d'écraser)
             });
 
     } catch (error) {
@@ -468,19 +412,14 @@ async function syncWith42() {
     }
 }
 
-// Event listener
 syncBtn.addEventListener('click', syncWith42);
 
-// ==================== LOGIQUE DU CALENDRIER ====================
-
-// Sauvegarder les paramètres
 function saveSettings() {
     data.monthlyHours = parseInt(monthlyHoursInput.value) || 160;
     saveDataToFirebase();
     updateStats();
 }
 
-// Toggle samedi
 function toggleSaturday() {
     saturdayToggle.classList.toggle('active');
     data.includeSaturday = saturdayToggle.classList.contains('active');
@@ -489,11 +428,9 @@ function toggleSaturday() {
     updateStats();
 }
 
-// Changer de mois
 function changeMonth(delta) {
     currentDate.setMonth(currentDate.getMonth() + delta);
     
-    // Recharger les données du nouveau mois
     if (currentUser) {
         loadDataFromFirebase();
     } else {
@@ -502,30 +439,25 @@ function changeMonth(delta) {
     }
 }
 
-// Obtenir le nombre de jours dans le mois
 function getDaysInMonth(date) {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
-// Obtenir le premier jour du mois (0 = lundi)
 function getFirstDayOfMonth(date) {
     let day = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
     return day === 0 ? 6 : day - 1;
 }
 
-// Formater la date
 function formatDate(year, month, day) {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-// Obtenir le nom du mois
 function getMonthName(date) {
     const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
                   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-// Vérifier si c'est aujourd'hui
 function isToday(year, month, day) {
     const today = new Date();
     return today.getFullYear() === year && 
@@ -533,8 +465,6 @@ function isToday(year, month, day) {
            today.getDate() === day;
 }
 
-
-// Rendre le calendrier
 function renderCalendar() {
     const calendar = document.getElementById('calendar');
     const monthName = document.getElementById('currentMonth');
@@ -542,19 +472,17 @@ function renderCalendar() {
     monthName.textContent = getMonthName(currentDate);
     calendar.innerHTML = '';
 
-    // Appliquer la classe si les samedis sont inclus (utilisée en CSS)
     const calendarWrapper = document.querySelector('.calendar');
     if (calendarWrapper) {
         calendarWrapper.classList.toggle('include-saturday', !data.includeSaturday);
 }
 
-    // En-têtes des jours (on marque samedi/dimanche pour pouvoir les styler)
     const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     dayNames.forEach((name, idx) => {
         const header = document.createElement('div');
         header.className = 'day-header';
-        if (idx === 5) header.classList.add('saturday-header'); // colonne Samedi
-        if (idx === 6) header.classList.add('sunday-header');   // colonne Dimanche
+        if (idx === 5) header.classList.add('saturday-header');
+        if (idx === 6) header.classList.add('sunday-header');
         header.textContent = name;
         calendar.appendChild(header);
     });
@@ -564,23 +492,20 @@ function renderCalendar() {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
 
-    // Cellules vides
     for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement('div');
         empty.className = 'day-cell empty';
         calendar.appendChild(empty);
     }
 
-    // Jours du mois
     for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = formatDate(year, month, day);
         const cell = document.createElement('div');
         cell.className = 'day-cell';
 
-        // Marquer samedi/dimanche pour le style
         const _dateObj = new Date(year, month, day);
-        if (_dateObj.getDay() === 6) cell.classList.add('saturday'); // samedi
-        if (_dateObj.getDay() === 0) cell.classList.add('sunday');   // dimanche
+        if (_dateObj.getDay() === 6) cell.classList.add('saturday');
+        if (_dateObj.getDay() === 0) cell.classList.add('sunday');
         
         if (isToday(year, month, day)) {
             cell.classList.add('today');
@@ -612,7 +537,6 @@ function renderCalendar() {
     }
 }
 
-// Calculer les jours travaillables
 function getWorkingDays() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -632,7 +556,6 @@ function getWorkingDays() {
     return workingDays;
 }
 
-// Calculer les jours travaillables restants
 function getRemainingWorkingDays() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -723,7 +646,6 @@ function updateStats() {
     const todayOverage = Math.max(0, todayMinutes - baseAverage);
     const adjustRemaining = Math.max(0, remainingForAverage - todayOverage);
     const average = remainingDays > 0 ? Math.floor(adjustRemaining / remainingDays) : 0;
-    
 
     document.getElementById('hoursDone').textContent = formatHours(totalMinutes);
     document.getElementById('hoursRemaining').textContent = formatHours(remainingMinutes);
@@ -756,8 +678,6 @@ function updateStats() {
         todayEl.style.display = 'none';
     }
 }
-
-// ==================== MODAL ====================
 
 function openModal(year, month, day) {
     selectedDay = { year, month, day };
@@ -802,7 +722,6 @@ function saveHours() {
         delete data.hours[dateKey];
     }
     
-    // Sauvegarder dans Firebase
     saveDataToFirebase();
     
     renderCalendar();
@@ -816,15 +735,12 @@ function deleteHours() {
     const dateKey = formatDate(selectedDay.year, selectedDay.month, selectedDay.day);
     delete data.hours[dateKey];
     
-    // Sauvegarder dans Firebase
     saveDataToFirebase();
     
     renderCalendar();
     updateStats();
     closeModal();
 }
-
-// ==================== EVENT LISTENERS ====================
 
 prevMonthBtn.addEventListener('click', () => changeMonth(-1));
 nextMonthBtn.addEventListener('click', () => changeMonth(1));
@@ -861,21 +777,18 @@ addTodayBtn.addEventListener('click', () =>
     openModal(now.getFullYear(), now.getMonth(), now.getDate());
 });
 
-// Touche Entrée dans le modal
 document.getElementById('hoursInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         saveHours();
     }
 });
 
-// Fermer le modal en cliquant en dehors
 modal.addEventListener('click', (e) => {
     if (e.target.id === 'modal') {
         closeModal();
     }
 });
 
-// Touche Entrée pour connexion/inscription
 document.getElementById('loginPassword').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') loginBtn.click();
 });

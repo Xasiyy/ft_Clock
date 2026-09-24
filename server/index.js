@@ -1,3 +1,5 @@
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -21,8 +23,12 @@ console.log('[startup] __dirname:', __dirname);
 const app = express();
 console.log('[startup] express app created');
 
-app.use(cors());
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: ['https://ftclock.dev', 'https://ftclock-production.up.railway.app'] }));
 app.use(express.json());
+app.use('/api/', rateLimit({ windowMs: 60 * 1000, max: 100 }));
 app.use(express.static(path.join(__dirname, 'public')));
 console.log('[startup] middleware registered, serving static from:', path.join(__dirname, 'public'));
 
@@ -43,7 +49,6 @@ let tokenExpiry = 0;
 
 async function fetchNewToken() {
     console.log('[token] fetching new 42 token...');
-    console.log('[token] using CLIENT_ID:', CLIENT_ID ? CLIENT_ID.slice(0, 8) + '...' : 'MISSING');
 
     let response;
     try {
@@ -86,6 +91,9 @@ async function getToken() {
 
 app.get('/api/logtime/:login', async (req, res) => {
     const { login } = req.params;
+    if (!/^[a-z0-9-]{1,20}$/i.test(login))
+        return res.status(400).json({ error: 'Login invalide' });
+
     console.log('[route] GET /api/logtime/' + login);
 
     try {
@@ -93,7 +101,7 @@ app.get('/api/logtime/:login', async (req, res) => {
         console.log('[route] token ready, calling 42 API for:', login);
 
         const response = await fetch(
-            `https://api.intra.42.fr/v2/users/${login}/locations_stats`,
+            `https://api.intra.42.fr/v2/users/${encodeURIComponent(login)}/locations_stats`,
             { headers: { 'Authorization': `Bearer ${token}` } }
         );
 

@@ -19,7 +19,6 @@ body {
         display: none !important;
         }
 
-
         .container {
             background: rgba(37, 37, 37, 0.95);
             backdrop-filter: blur(10px);
@@ -105,7 +104,7 @@ body {
             margin: 0;
         }
         .setting-input {
-            -moz-appearance: textfield; /* Firefox */
+            -moz-appearance: textfield;
         }
 
         .minus-btn,
@@ -365,7 +364,6 @@ body {
             background: rgba(239, 68, 68, 0.3);
         }
 
-/* === AUTHENTIFICATION === */
 .auth-container {
     width: 100%;
     max-width: 400px;
@@ -458,7 +456,6 @@ body {
     min-height: 20px;
 }
 
-/* === APPLICATION PRINCIPALE === */
 .container {
     background: rgba(37, 37, 37, 0.95);
     backdrop-filter: blur(10px);
@@ -503,7 +500,6 @@ body {
     color: #ef4444;
   }
 
-
 .calendar.include-saturday .day-header.sunday-header {
     color: #ef4444;
 }
@@ -525,14 +521,12 @@ body {
     color: #ef4444;
 }
 
-/* Style pour le groupe mail + login */
 .user-meta {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-/* Style du bouton login (cliquable) */
 .login-display-btn {
     background: rgba(59, 130, 246, 0.1);
     border: 1px solid rgba(59, 130, 246, 0.2);
