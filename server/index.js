@@ -27,9 +27,13 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 
-//Maintenance mode
+//Maintenance mode : toujours actif en prod (Railway) sauf MAINTENANCE=false, en local seulement si MAINTENANCE=true
+const IS_PROD = !!process.env.RAILWAY_ENVIRONMENT_NAME || !!process.env.RAILWAY_ENVIRONMENT;
+const MAINTENANCE = IS_PROD ? process.env.MAINTENANCE !== 'false' : process.env.MAINTENANCE === 'true';
+console.log('[startup] maintenance mode:', MAINTENANCE);
+
 app.use((req, res, next) => {
-  if (process.env.MAINTENANCE !== 'true') return next();
+  if (!MAINTENANCE) return next();
   if (req.path === '/api/health') return next();
 
   if (req.path.startsWith('/api/')) {
@@ -42,10 +46,10 @@ app.use((req, res, next) => {
 <style>
   body{margin:0;min-height:100vh;display:grid;place-items:center;
        font-family:system-ui,sans-serif;background:#111;color:#eee;text-align:center}
-  p{color:#999}
+  p{color:#FF0000}
 </style></head>
 <body><div>
-  <h1>lLes serveurs de 42 ne sont actuellement plus disponibles, ft-clock ne peut donc pas récupérer les informations liées au logtime. Désolée pour le désagrément, la situation est suivie de près pour pouvoir remettre le service en état dans les plus brefs délais/h1>
+  <h1>❌ Les serveurs de 42 ne sont actuellement plus disponibles, ft-clock ne peut donc pas récupérer les informations liées au logtime. Désolée pour le désagrément, la situation est suivie de près pour pouvoir remettre le service en état dans les plus brefs délais ❌</h1>
 </div></body></html>`);
 });
 
