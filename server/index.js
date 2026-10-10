@@ -26,6 +26,30 @@ console.log('[startup] express app created');
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
+
+//Maintenance mode
+app.use((req, res, next) => {
+  if (process.env.MAINTENANCE !== 'true') return next();
+  if (req.path === '/api/health') return next();
+
+  if (req.path.startsWith('/api/')) {
+    return res.status(503).json({ error: 'Service en maintenance, réessaie plus tard.' });
+  }
+  res.status(503).send(`<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ft_Clock — Error</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;
+       font-family:system-ui,sans-serif;background:#111;color:#eee;text-align:center}
+  p{color:#999}
+</style></head>
+<body><div>
+  <h1>lLes serveurs de 42 ne sont actuellement plus disponibles, ft-clock ne peut donc pas récupérer les informations liées au logtime. Désolée pour le désagrément, la situation est suivie de près pour pouvoir remettre le service en état dans les plus brefs délais/h1>
+</div></body></html>`);
+});
+
+
 app.use(cors({ origin: ['https://ftclock.dev', 'https://ftclock-production.up.railway.app'] }));
 app.use(express.json());
 app.use('/api/', rateLimit({ windowMs: 60 * 1000, max: 100 }));
