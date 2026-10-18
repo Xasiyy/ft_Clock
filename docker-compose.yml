@@ -1,0 +1,9 @@
+name: ft-clock
+
+services:
+  ft-clock:
+    build: .
+    env_file: .env
+    ports:
+      - "127.0.0.1:2441:2441"
+    restart: unless-stopped

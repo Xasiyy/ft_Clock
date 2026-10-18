@@ -21,6 +21,7 @@ const __dirname = path.dirname(__filename);
 console.log('[startup] __dirname:', __dirname);
 
 const app = express();
+app.set('trust proxy', 'loopback');
 console.log('[startup] express app created');
 
 app.set('trust proxy', 1);
@@ -28,7 +29,7 @@ app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 
 //Maintenance mode : toujours actif en prod (Railway) sauf MAINTENANCE=false, en local seulement si MAINTENANCE=true
-const IS_PROD = !!process.env.RAILWAY_ENVIRONMENT_NAME || !!process.env.RAILWAY_ENVIRONMENT;
+const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT_NAME || !!process.env.RAILWAY_ENVIRONMENT;
 const MAINTENANCE = IS_PROD ? process.env.MAINTENANCE !== 'false' : process.env.MAINTENANCE === 'true';
 console.log('[startup] maintenance mode:', MAINTENANCE);
 
